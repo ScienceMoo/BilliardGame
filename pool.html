@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<!-- Fig. 14.26: cannon.html -->
+<!-- Cannon Game HTML5 document. -->
+<html>
+   <head>
+      <meta charset = "utf-8">
+      <title>Pool Game</title>
+      <style type = "text/css">
+      html {
+         font-family: Futura, sans-serif;
+      }
+      body {
+         display:block;
+         font-family: Futura, sans-serif;
+         font-size: 13px;
+      }
+      .number {
+      }
+      #theGame {
+         display:block;
+      }
+      canvas {
+         border: 2px solid black;
+      }
+      #introStuff {
+         display:flex;
+      }
+      #Message, .words {
+         margin-left: 30px;
+      }
+      .button {
+         border: none;
+         padding: 7px 16px;
+         text-align: center;
+         text-decoration: none;
+         display: inline-block;
+         font-size: 16px;
+         color: white;
+         margin-top: 0;
+         margin-bottom: 0;
+      }
+      #earthButton {
+         background-color: #d5313e;
+         margin-left: 50px;
+      }
+      #earthButton:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #marsButton {
+         background-color: #d5313e;
+         margin-left: 50px;
+      }
+      #marsButton:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #moonButton {
+         background-color: #d5313e;
+         margin-left: 50px;
+      }
+      #moonButton:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #jupButton {
+         background-color: #d5313e;
+         margin-left: 50px;
+      }
+      #jupButton:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #startButton {
+         background-color: #30a0d5;
+         margin-left: 50px;
+         width: 200px;
+      }
+      #startButton:hover {
+         background-color: #30caff;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #resetButton {
+         background-color: #30a0d5;
+         margin-left: 50px;
+         width: 200px;
+      }
+      #resetButton:hover {
+         background-color: #30caff;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #increaseSpeed, #decreaseSpeed {
+         background-color: #d5313e;
+         margin-left: 30px;
+      }
+      #increaseSpeed:hover, #decreaseSpeed:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #increaseTargets, #decreaseTargets {
+         background-color: #4200d5;
+         display: inline-block;
+         margin-left: 30px;
+      }
+      #increaseTargets:hover, #decreaseTargets:hover {
+        background-color: #812bff;
+        cursor: pointer;
+        box-shadow: 3px 3px 8px black;
+      }
+      #increaseBallSize, #increaseBallSpeed, #increaseBallDensity, #decreaseBallDensity, #decreaseBallSpeed, #decreaseBallSize {
+       background-color: #00d517;
+       margin-left: 30px;
+      }
+      #increaseBallSize:hover, #decreaseBallSize:hover, #increaseBallSpeed:hover, #decreaseBallSpeed:hover, #increaseBallDensity:hover, #decreaseBallDensity:hover {
+        background-color: #33ff32;
+        cursor: pointer;
+        box-shadow: 3px 3px 8px black;
+      }
+      #increaseFriction, #decreaseFriction {
+         background-color: #1a004f;
+         display: inline-block;
+         margin-left: 30px;
+      }
+      #increaseFriction:hover, #decreaseFriction:hover {
+         background-color: #2e0098;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+
+      #reverseFriction {
+         background-color: #1a004f;
+         display: inline-block;
+         margin-left: 30px;
+      }
+      #reverseFriction:hover {
+         background-color: #2e0098;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+
+      #startButton:active,
+      #increaseBallSize:active, #decreaseBallSize:active,
+      #increaseTargets:active, #decreaseTargets:active,
+      #increaseSpeed:active, #decreaseSpeed:active,
+      #increaseBallSpeed:active, #decreaseBallSpeed:active,
+      #increaseBallDensity:active, #decreaseBallDensity:active,
+      #increaseFriction:active, #decreaseFriction:active,
+      #reverseFriction:active, resetButton:active,
+      #marsButton:active, #moonButton:active,
+      #earthButton:active
+      {
+         border: none;
+         box-shadow: inset 3px 3px 8px black;
+      }
+      input:focus {
+         outline: 0;
+         -moz-outline-style: none;
+      }
+      #title {
+         font-size: 50px;
+      }
+      h1 {
+         margin-top: 0;
+         margin-bottom: 0;
+      }
+      h2 {
+         margin-left: 30px;
+         margin-bottom: 0;
+      }
+      label {
+         margin-left: 10px;
+      }
+      .horizontal {
+         display: flex;
+      }
+      .vertical {
+         display: block;
+      }
+      </style>
+	   <script src = "pool.js"></script>
+   </head>
+   <body>
+      <audio id = "stickSound" preload = "auto">
+         <source src = "stick.mp3" type = "audio/mp3"></audio>
+      <audio id = "collisionSound" preload = "auto">
+         <source src = "collision.mp3" type = "audio/mp3"></audio>
+      <audio id = "wallHitSound" preload = "auto">
+         <source src = "wallHit.aiff" type = "audio/aiff"></audio>
+
+      <div id="theGame">
+         <div id="introStuff" class="horizontal">
+            <div class="vertical">
+               <div id="title">Welcome to the Billiard Game!</div>
+               <h2>Click on the game canvas to shoot.</h2>
+            </div>
+         </div>
+         <div class="horizontal">
+            <div id="canvasSection" class="vertical">
+               <canvas id = "theCanvas" width = "800" height = "500"></canvas>
+               <div class="horizontal">
+                   <p><input id = "startButton" class="button" type = "button" value = "Start Game"></p>
+                   <p><input id = "resetButton" class="button" type = "button" value = "Reset Values"></p>
+               </div>
+            </div>
+            <div class="vertical">
+               <h1 class="words">White Ball Options:</h1>
+               <div class="horizontal">
+                  <p><input id = "increaseBallSize" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseBallSize" class="button" type = "button" value = "Decrease"></p>
+                  <div class="vertical">
+                     <div class="horizontal">
+                        <h2>Radius:</h2>
+                        <h2 id="ballSize" class="number"></h2>
+                     </div>
+                     <div class="horizontal">
+                        <h2>Volume</h2>
+                        <h2 style="margin-left:10px; margin-right:0;"> = </h2>
+                        <div class="vertical" style="margin-left:10px;; ">
+                           <p id="numerator" style="margin-bottom:0; margin-top:10px; font-family: Arial, serif; font-weight: bold; font-size:20px;"><u>3</u></p>
+                           <p id="denominator" style="margin:0; font-family: Arial, serif; font-weight: bold; font-size:20px;">4</p>
+                        </div>
+                        <div style="margin-top:17px; margin-left:3px; font-family: Arial, serif; font-weight: bold; font-size:20px;">&#960</div>
+                        <div id="volumeEquation" style="margin-top:17px; margin-left:3px; font-family: Arial, serif; font-weight: bold; font-size:20px;"></div>
+                        <sup style="margin-top:12px; font-family: Arial, serif; font-weight: bold; font-size:14px;">3</sup>
+                        <h2 style="margin-left:10px; margin-right:0;"> = </h2>
+                        <h2 id="volume" class="number" style="margin-left:10px;"></h2>
+                        <p style="margin-left:10px; margin-right:0; margin-top: 17px; font-family: Arial, serif; font-weight: bold; font-size:20px;">m</p>
+                        <sup style="margin-top:12px; font-family: Arial, serif; font-weight: bold; font-size:14px;">3</sup>
+                     </div>
+                  </div>
+               </div>
+               <div class="horizontal">
+                  <p><input id = "increaseBallDensity" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseBallDensity" class="button" type = "button" value = "Decrease"></p>
+                  <div class="vertical">
+                     <div class="horizontal">
+                        <h2>Density:</h2>
+                        <h2 id="ballDensity" class="number"></h2>
+                     </div>
+                     <div class="horizontal">
+                        <h2>Mass</h2>
+                        <h2 style="margin-left:10px; margin-right:0;"> = </h2>
+                        <h2 id="mass" class="number" style="margin-left:10px;"></h2>
+                        <p style="margin-left:10px; margin-right:0; margin-top: 17px; font-family: Arial, serif; font-weight: bold; font-size:20px;"> kg</p>
+                     </div>
+                  </div>
+               </div>
+
+               <div class="horizontal">
+                  <p><input id = "increaseBallSpeed" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseBallSpeed" class="button" type = "button" value = "Decrease"></p>
+                  <h2>Speed:</h2>
+                  <h2 id="whiteBallSpeed" class="number"></h2>
+               </div>
+               <h1 class="words">Other Options:</h1>
+               <div class="horizontal">
+                  <p><input id = "increaseFriction" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseFriction" class="button" type = "button" value = "Decrease"></p>
+                  <h2>Coefficient of Friction:</h2>
+                  <h2 id="friction" class="number"></h2>
+               </div>
+               <h1 id="Message"></h1>
+               <h2 id="scores"></h2>
+               <h1 class="words">Press any key to restart.</h1>
+               <h1 class="words">Highscores:</h1>
+               <h2 id="highScores">
+                  <div id="firstHighScore"></div>
+               </h2>
+            </div>
+         </div>
+      </div>
+   </body>
+</html>
+
