@@ -31,7 +31,7 @@ var timeElapsed; // the number of seconds elapsed
 // variables for the balls[0] and target balls
 var ballVelocity;
 var ballRadius = 12; // balls[0] radius
-var whiteBallSpeed = 2000; // balls[0] speed
+var whiteBallSpeed = 1500; // balls[0] speed
 
 var ballVolume; // m^3
 var ballDensity = 7860; //  kg per m^3
@@ -58,14 +58,35 @@ var wallSound;
 var canvasWidth; // width of the canvas
 var canvasHeight; // height of the canvas
 
+var ballImages = [];
+ballImages[9] = new Image();
+ballImages[9].src = "ball9.PNG";
+
+ballImages[10] = new Image();
+ballImages[10].src = "ball10.PNG";
+
+ballImages[11] = new Image();
+ballImages[11].src = "ball11.PNG";
+
+ballImages[12] = new Image();
+ballImages[12].src = "ball12.PNG";
+
+ballImages[13] = new Image();
+ballImages[13].src = "ball13.PNG";
+
+ballImages[14] = new Image();
+ballImages[14].src = "ball14.PNG";
+
+ballImages[15] = new Image();
+ballImages[15].src = "ball15.PNG";
 var colorArray = [];
-colorArray[0] = "yellow";
-colorArray[1] = "blue";
-colorArray[2] = "red";
-colorArray[3] = "purple";
-colorArray[4] = "orange";
-colorArray[5] = "green";
-colorArray[6] = "red";
+colorArray[1] = "#FFD600";
+colorArray[2] = "#005AFF";
+colorArray[3] = "red";
+colorArray[4] = "#6500FF";
+colorArray[5] = "#FF7700";
+colorArray[6] = "#00FF25";
+colorArray[7] = "#972A00";
 
 // called when the app first launches
 function setupGame()
@@ -89,6 +110,10 @@ function setupGame()
       "click", increaseBallSize);
    document.getElementById( "decreaseBallSize" ).addEventListener(
       "click", decreaseBallSize);
+
+   document.getElementById( "changeBallSize" ).addEventListener(
+      "click", changeBallSize);
+
    document.getElementById( "increaseBallDensity" ).addEventListener(
       "click", increaseBallDensity);
    document.getElementById( "decreaseBallDensity" ).addEventListener(
@@ -376,6 +401,33 @@ function decreaseFriction() {
    document.getElementById("friction").innerHTML = friction + " N";
 }
 
+function changeBallSize() {
+   var input = document.getElementById("changeBallSize").value;
+   console.log(input);
+   ballRadius = input;
+   document.getElementById("ballSize" +
+       "").innerHTML = ballRadius + " cm";
+   document.getElementById("volumeEquation").innerHTML = ballRadius;
+
+   let r = ballRadius/100;
+   ballVolume = 4 * Math.PI * r * r * r / 3;
+   ballMass = ballDensity * ballVolume;
+   ballVolume = ballVolume * 1000;
+   ballVolume = Math.trunc(ballVolume);
+   ballVolume = ballVolume / 1000;
+   document.getElementById("volume").innerHTML = ballVolume;
+
+   ballMass = ballMass * 100;
+   ballMass = Math.trunc(ballMass);
+   ballMass = ballMass/100;
+   document.getElementById("mass").innerHTML = ballMass;
+
+   //holeRadius = ballRadius + 5;
+   //wallWidth = 2 * holeRadius * 1.2;
+   console.log(holeRadius);
+   newGame();
+}
+
 function increaseBallSize() {
    if (ballRadius < 5) {
       ballRadius = ballRadius + 1;
@@ -550,8 +602,8 @@ function updatePositions()
                   collisionSound.play(); // play target hit sound
                   var xsign = Math.random();
                   var ysign = Math.random();
-                  balls[j].velocity.x = Math.random() * 2000;
-                  balls[j].velocity.y = Math.random() * 2000;
+                  balls[j].velocity.x = Math.random() * whiteBallSpeed;
+                  balls[j].velocity.y = Math.random() * whiteBallSpeed;
                   if (xsign > 0.5) {
                      balls[j].velocity.x = balls[j].velocity.x * (-1);
                   }
@@ -724,12 +776,24 @@ function draw()
    // draw the balls // draw balls
    for (var k = 0; k <= NUM_BALLS; k++) {
       if (!sunkStates[k]) {
-         context.fillStyle = "red";
+         if (k === 0 || k > 8) {
+            context.fillStyle = "white";
+         }
+         else if (k !== 8) {
+            context.fillStyle = colorArray[k];
+         }
+         else if (k === 8) {
+            context.fillStyle = "black";
+         }
          context.beginPath();
          context.arc(balls[k].x, balls[k].y, ballRadius,
          0, Math.PI * 2);
          context.closePath();
          context.fill();
+         if (k > 8) {
+            context.drawImage(ballImages[k],balls[k].x - ballRadius,balls[k].y - ballRadius, 2 * ballRadius, 2 * ballRadius);
+         }
+
          //make the circle
          /*if (k < 8) {
             //context.fillStyle = "white";
@@ -784,7 +848,13 @@ function draw()
 
          if (k !== 0) {
             context.font = "12px Futura";
-            context.fillStyle = "white";
+            if (k > 8 || k < 8) {
+               context.fillStyle = "black";
+            }
+            else {
+               context.fillStyle = "white";
+            }
+
             if (k < 10) {
                context.fillText(k, balls[k].x - 4, balls[k].y - 4);
             }
@@ -792,6 +862,7 @@ function draw()
                context.fillText(k, balls[k].x - 7, balls[k].y - 4);
             }
          }
+
       } // end if
    }
 
