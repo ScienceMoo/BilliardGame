@@ -5,7 +5,7 @@ var context; // used for drawing on the canvas
 
 // constants for game play
 var NUM_BALLS = 15; // sections in the target
-var TIME_INTERVAL = 10; // screen refresh interval in milliseconds
+var TIME_INTERVAL = 5; // screen refresh interval in milliseconds
 var NUM_HOLES = 6;
 
 var mars = false;
@@ -13,7 +13,7 @@ var earth = false;
 var moon = false;
 var jupiter = false;
 
-var ballGap = 2;
+var ballGap = 1;
 var ballThreshhold = 2;
 var holeThreshhold = 2;
 var wallThreshhold = 2;
@@ -32,6 +32,7 @@ var timeElapsed; // the number of seconds elapsed
 var ballVelocity;
 var ballRadius = 12; // balls[0] radius
 var whiteBallSpeed = 1500; // balls[0] speed
+var entropy = 0;
 
 var ballVolume; // m^3
 var ballDensity = 7860; //  kg per m^3
@@ -44,10 +45,10 @@ var sunkStates; // is each target piece hit?
 var targetBallsSunk; // number of balls sunk
 
 var holes;
-var holeRadius = ballRadius + 5;
-var wallWidth = 2 * holeRadius * 1.2;
+var holeRadius;
+var wallWidth;
 
-var friction = 0.01;
+var friction = 1;
 var tableTilt;
 
 // variables for sounds
@@ -60,25 +61,25 @@ var canvasHeight; // height of the canvas
 
 var ballImages = [];
 ballImages[9] = new Image();
-ballImages[9].src = "ball9.PNG";
+ballImages[9].src = "ball9.png";
 
 ballImages[10] = new Image();
-ballImages[10].src = "ball10.PNG";
+ballImages[10].src = "ball10.png";
 
 ballImages[11] = new Image();
-ballImages[11].src = "ball11.PNG";
+ballImages[11].src = "ball11.png";
 
 ballImages[12] = new Image();
-ballImages[12].src = "ball12.PNG";
+ballImages[12].src = "ball12.png";
 
 ballImages[13] = new Image();
-ballImages[13].src = "ball13.PNG";
+ballImages[13].src = "ball13.png";
 
 ballImages[14] = new Image();
-ballImages[14].src = "ball14.PNG";
+ballImages[14].src = "ball14.png";
 
 ballImages[15] = new Image();
-ballImages[15].src = "ball15.PNG";
+ballImages[15].src = "ball15.png";
 var colorArray = [];
 colorArray[1] = "#FFD600";
 colorArray[2] = "#005AFF";
@@ -100,6 +101,8 @@ function setupGame()
       "click", newGame, false );
    document.getElementById( "resetButton" ).addEventListener(
       "click", reset, false );
+   document.getElementById( "pauseButton" ).addEventListener(
+      "click", pauseGame, false );
 
    document.getElementById( "increaseBallSpeed" ).addEventListener(
       "click", increaseBallSpeed);
@@ -138,6 +141,7 @@ function setupGame()
       balls[i].velocity = {};
       balls[i].velocity.x = 0;
       balls[i].velocity.y = 0;
+      balls[i].speed = 0;
       balls[i].angle = 0;
       balls[i].angleTop = true;
       balls[i].angleRight = true;
@@ -193,8 +197,13 @@ function resetElements()
 
    // set up the balls
    for (var i=0; i <= NUM_BALLS; i++){
+      balls[i].radius = ballRadius;
+      balls[i].density = 7950;
+      balls[i].mass = 4 * Math.PI * balls[i].radius * balls[i].radius / 3;
       balls[i].velocity.x = 0;
       balls[i].velocity.y = 0;
+      balls[i].speed = 0;
+      balls[i].kineticEnergy = balls[i].mass * balls[i].speed;
       balls[i].moving = false;
       balls[i].angleTop = true;
       balls[i].angleRight = true;
@@ -260,6 +269,24 @@ function resetElements()
    document.getElementById("mass").innerHTML = ballMass;
 } // end function resetElements
 
+function pauseGame() {
+   stopTimer();
+   document.getElementById( "pauseButton" ).value = "Play";
+   document.getElementById( "pauseButton" ).removeEventListener(
+      "click", pauseGame, false );
+   document.getElementById( "pauseButton" ).addEventListener(
+      "click", unpauseGame, false );
+}
+
+function unpauseGame() {
+   startTimer();
+   document.getElementById( "pauseButton" ).value = "Pause";
+   document.getElementById( "pauseButton" ).removeEventListener(
+      "click", unpauseGame, false );
+   document.getElementById( "pauseButton" ).addEventListener(
+      "click", pauseGame, false );
+}
+
 // reset all the screen elements and start a new game
 function newGame()
 {
@@ -269,54 +296,13 @@ function newGame()
 
    targetBallsSunk = 0; // no balls have been sunk
    ballVelocity = whiteBallSpeed; // set initial velocity
-   timeLeft = 30; // start the countdown at 10 seconds
+   timeLeft = 1000; // start the countdown at 10 seconds
    timerCount = 0; // the timer has fired 0 times so far
    shotsFired = 0; // set the initial number of shots fired
    timeElapsed = 0; // set the time elapsed to zero
 
    startTimer(); // starts the game loop
 } // end function newGame
-
-function goToMars() {
-   earth = false;
-   mars = true;
-   moon = false;
-   jupiter = false;
-
-   friction = -3.7;
-   document.getElementById("friction").innerHTML = friction + " m/s<sup>2</sup>";
-   draw();
-}
-function goToEarth() {
-   earth = true;
-   mars = false;
-   moon = false;
-   jupiter = false;
-
-   friction = -9.8;
-   document.getElementById("friction").innerHTML = friction + " m/s<sup>2</sup>";
-   draw();
-}
-function goToMoon() {
-   earth = false;
-   mars = false;
-   moon = true;
-   jupiter = false;
-
-   friction = -1.6;
-   document.getElementById("friction").innerHTML = friction + " m/s<sup>2</sup>";
-   draw();
-}
-function goToJupiter() {
-   earth = false;
-   mars = false;
-   moon = false;
-   jupiter = true;
-
-   friction = -24.8;
-   document.getElementById("friction").innerHTML = friction + " m/s<sup>2</sup>";
-   draw();
-}
 
 function reset() {
    whiteBallSpeed = 300;
@@ -325,8 +311,6 @@ function reset() {
    ballRadius = 20; // balls[0] radius
    whiteBallSpeed = 700 * 1.5; // balls[0] speed
    ballDensity = 7860; //  kg per m^3
-   friction = -9.8;
-
 
    let r = ballRadius/100;
    ballVolume = 4 * Math.PI * r * r * r / 3;
@@ -386,18 +370,12 @@ function decreaseBallDensity() {
 }
 
 function increaseFriction() {
-   friction = friction + 0.001;
-   friction = friction * 1000;
-   friction = Math.trunc(friction);
-   friction = friction / 1000;
+   friction = (friction + 1);
    document.getElementById("friction").innerHTML = friction + " N";
 }
 
 function decreaseFriction() {
-   friction = friction - 0.001;
-   friction = friction * 1000;
-   friction = Math.trunc(friction);
-   friction = friction / 1000;
+   friction = (friction - 1);
    document.getElementById("friction").innerHTML = friction + " N";
 }
 
@@ -405,8 +383,7 @@ function changeBallSize() {
    var input = document.getElementById("changeBallSize").value;
    console.log(input);
    ballRadius = input;
-   document.getElementById("ballSize" +
-       "").innerHTML = ballRadius + " cm";
+   document.getElementById("ballSize").innerHTML = ballRadius + " cm";
    document.getElementById("volumeEquation").innerHTML = ballRadius;
 
    let r = ballRadius/100;
@@ -422,10 +399,11 @@ function changeBallSize() {
    ballMass = ballMass/100;
    document.getElementById("mass").innerHTML = ballMass;
 
-   //holeRadius = ballRadius + 5;
-   //wallWidth = 2 * holeRadius * 1.2;
-   console.log(holeRadius);
+   holeRadius = ballRadius + 5;
+   wallWidth = 2 * holeRadius * 1.2;
+   resetElements();
    newGame();
+   resetElements();
 }
 
 function increaseBallSize() {
@@ -488,47 +466,52 @@ function updatePositions()
    for (var i =0; i <= NUM_BALLS; i++)
    {
       if (balls[i].moving) {
-
+         var collided = false;
          // apply friction
-         if (balls[i].velocity.x !== 0) {
-            balls[i].velocity.x = balls[i].velocity.x * (1 - (friction));
+         if (balls[i].velocity.x !== 0 && balls[i].velocity.x !== null) {
+            balls[i].velocity.x = balls[i].velocity.x * (1 - (friction/1000));
             balls[i].velocity.x = balls[i].velocity.x * 1000;
             balls[i].velocity.x = Math.trunc(balls[i].velocity.x );
             balls[i].velocity.x = balls[i].velocity.x / 1000;
-            console.log("velocity x:");
-            console.log(balls[i].velocity.x);
          }
          if (balls[i].velocity.y !== 0) {
-            balls[i].velocity.y = balls[i].velocity.y * (1 - (friction));
+            balls[i].velocity.y = balls[i].velocity.y * (1 - (friction/1000));
             balls[i].velocity.y = balls[i].velocity.y * 1000;
             balls[i].velocity.y = Math.trunc(balls[i].velocity.y );
             balls[i].velocity.y = balls[i].velocity.y / 1000;
-            console.log("velocity y:");
-            console.log(balls[i].velocity.y);
          }
 
          var interval = TIME_INTERVAL / 1000.0;
          // move the ball
-         balls[i].x += interval * balls[i].velocity.x;
-         balls[i].y += interval * balls[i].velocity.y;
+         var potentialX = balls[i].x + (interval * balls[i].velocity.x);
+         var potentialY = balls[i].y + (interval * balls[i].velocity.y);
+
+
+         // prevent overlap
+         if (isOverlap(potentialX, potentialY, i) === i) {
+            balls[i].x = potentialX;
+            balls[i].y = potentialY;
+         }
+         else {
+            console.log("PREVENTING OVERLAP");
+            collision(i, isOverlap(potentialX, potentialY, i));
+            collided = true;
+         }
 
          // COLLISION WITH WALLS
          // check for collisions with side walls
-         if ((balls[i].x + ballRadius + wallThreshhold > (canvasWidth - wallWidth) ||
+         if (((balls[i].x + ballRadius + wallThreshhold > (canvasWidth - wallWidth) ||
              balls[i].x - ballRadius - wallThreshhold < wallWidth) &&
-             balls[i].velocity.x !== 0
+             balls[i].velocity.x !== 0) &&
+             collided === false
          ) {
             if (balls[i].y < (holes[0].y + holeRadius) ||
                 balls[i].y > (holes[1].y - holeRadius))
             {
-               console.log("SUNK BALL!");
                sunkStates[i] = true;
                balls[i].moving = false;
             }
             else {
-               console.log("Collision with side wall. Velocity:");
-               console.log(balls[i].velocity.x);
-               console.log(balls[i].velocity.y);
                 balls[i].velocity.x *= (-1.00); //reverse x direction
                 balls[i].x += interval * balls[i].velocity.x;
                 balls[i].y += interval * balls[i].velocity.y;
@@ -538,48 +521,25 @@ function updatePositions()
          } // end if
 
          // check for collisions with top and bottom walls
-         else if ((balls[i].y + ballRadius + wallThreshhold > (canvasHeight - wallWidth) ||
+         else if (((balls[i].y + ballRadius + wallThreshhold > (canvasHeight - wallWidth) ||
              balls[i].y - ballRadius - wallThreshhold < wallWidth) &&
-             balls[i].velocity.y !== 0
+             balls[i].velocity.y !== 0) &&
+             collided === false
          ) {
              if (balls[i].x < (holes[0].x + holeRadius) ||
              (balls[i].x > (holes[4].x - holeRadius) &&
              balls[i].x < (holes[4].x + holeRadius)) ||
              balls[i].x > (holes[3].x - holeRadius)) {
-               console.log("SUNK BALL!");
                sunkStates[i] = true;
                balls[i].moving = false;
             }
             else {
-                console.log("Collision with top or bottom wall. Velocity:");
-                console.log(balls[i].velocity.x);
-                console.log(balls[i].velocity.y);
                 balls[i].velocity.y *= (-1.00); //reverse y direction
                 balls[i].x += interval * balls[i].velocity.x;
                 balls[i].y += interval * balls[i].velocity.y;
                 wallSound.play();
             }
-         } // end if
-         else {
-            for (var j = 0; j <= NUM_BALLS; j++) {
-               dist = Math.sqrt(((balls[i].x - balls[j].x) * (balls[i].x - balls[j].x)) +
-                   ((balls[i].y - balls[j].y) * (balls[i].y - balls[j].y)));
-
-               // CORRECT OVERLAPPING BALLS
-               if ((i !== j) && (dist < (2 * ballRadius))) {
-                  if (balls[i].x < balls[j].x) {
-                     balls[i].x = balls[i].x - 1;
-                  } else {
-                     balls[i].x = balls[i].x + 1;
-                  }
-                  if (balls[i].y < balls[j].y) {
-                     balls[i].y = balls[i].y - 1;
-                  } else {
-                     balls[i].y = balls[i].y + 1;
-                  }
-               }
-            }
-         }
+         } // end else if
 
          // check for ball is no longer moving
          if ((Math.abs(balls[i].velocity.x) < 5) && (Math.abs(balls[i].velocity.y) < 5)) {
@@ -587,36 +547,9 @@ function updatePositions()
             balls[i].velocity.y = 0;
             balls[i].moving = false;
          }
-         // check for collision with other balls or holes
+         // check for collision with holes
          else {
             for (var j = 0; j <= NUM_BALLS; j++) {
-               dist = Math.sqrt(((balls[i].x - balls[j].x) * (balls[i].x - balls[j].x)) +
-                   ((balls[i].y - balls[j].y) * (balls[i].y - balls[j].y)));
-
-               // Check for collision with balls
-               if (
-                   (!sunkStates[j] && !sunkStates[i]) &&
-                   (i !== j) &&
-                   dist <= ((2 * ballRadius) + ballThreshhold) &&
-                   dist >= ((2 * ballRadius) - ballThreshhold)) {
-                  collisionSound.play(); // play target hit sound
-                  var xsign = Math.random();
-                  var ysign = Math.random();
-                  balls[j].velocity.x = Math.random() * whiteBallSpeed;
-                  balls[j].velocity.y = Math.random() * whiteBallSpeed;
-                  if (xsign > 0.5) {
-                     balls[j].velocity.x = balls[j].velocity.x * (-1);
-                  }
-                  if (ysign > 0.5) {
-                     balls[j].velocity.y = balls[j].velocity.y * (-1);
-                  }
-                  balls[j].angle = balls[i].angle;
-                  balls[j].moving = true;
-
-                  /*balls[i].velocity.x = 0;
-                  balls[i].velocity.y = 0;
-                  balls[i].moving = false; */
-               } // END IF LOOKING FOR COLLISION
                // check for collision with holes
                for (var k = 0; k < NUM_HOLES; k++) {
                   if (balls[i].x < (holes[k].x + holeThreshhold) &&
@@ -661,24 +594,113 @@ function updatePositions()
       stopTimer();
       showGameOverDialog("You lost HAHA!"); // show the losing dialog
    } // end if
+
+   if (sunkStates[0]) {
+      sunkWhiteBall("You sunk the white ball DUMBASS!"); // show the losing dialog
+   }
+
 } // end function updatePositions
 
 // fires the white ball
 function fireWhiteBall(event)
 {
-   for (var i = 0; i <=NUM_BALLS; i++) {
-      if (balls[i].moving) {
-         return; // do nothing
-      }
+   if (!balls[0].moving && !sunkStates[0]) {
+      directBall(event);
+      ++shotsFired; // increment shotsFired
+      stickSound.play();
    }
-
-   var angle = directBall(event);
-
-   ++shotsFired; // increment shotsFired
-
-   stickSound.play();
+   else if (sunkStates[0]) {
+      replaceWhiteBall(event);
+   }
 } // end function firewhiteBall
 
+function replaceWhiteBall(event) {
+    var totalOffsetX = 0;
+    var totalOffsetY = 0;
+    var currentElement = canvas;
+    do{
+        totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
+        totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
+    }
+    while(currentElement = currentElement.offsetParent)
+
+   // get the location of the click
+   var clickPoint = {};
+   clickPoint.x = event.x - totalOffsetX;
+   clickPoint.y = event.y - totalOffsetY;
+
+   if (isOverlap(clickPoint.x, clickPoint.y, 0) !== 0) {
+      showGameOverDialog("There's already a ball there.");
+      draw();
+   }
+   else if (isOverlap(clickPoint.x, clickPoint.y, 0) === 0){
+      sunkStates[0] = false;
+      balls[0].x = clickPoint.x;
+      balls[0].y = clickPoint.y;
+      balls[0].moving = false;
+      balls[0].velocity.x = 0;
+      balls[0].velocity.y = 0;
+   }
+}
+
+function isOverlap(x, y, i) {
+   var result = i;
+   for (var j = 1; j <= NUM_BALLS; j++) {
+      dist = Math.sqrt(((x - balls[j].x) * (x - balls[j].x)) +
+      ((y - balls[j].y) * (y - balls[j].y)));
+
+      if ((i !== j) && (dist <= (2 * ballRadius) + 2) && !sunkStates[j]) {
+         result = j;
+      }
+   }
+   return result;
+}
+
+function collision(i, j) {
+   collisionSound.play(); // play target hit sound
+
+   // calculate new speed
+   balls[j].speed = (Math.random() * balls[i].speed) + (0.5*balls[i].speed);
+   
+   // calculate other ball new angle
+   var angleSign = Math.random();
+   if (angleSign > 0.5) {
+      balls[j].angle = balls[i].angle + (Math.random() * (Math.PI/2));
+   }
+   else {
+      balls[j].angle = balls[i].angle - (Math.random() * (Math.PI/2));
+   }
+
+   // get the x component of the total velocity
+   balls[j].velocity.x = (balls[j].speed * Math.cos(balls[j].angle)).toFixed(3);
+
+   // get the y component of the total velocity
+   balls[j].velocity.y = (-1) * (balls[j].speed * Math.sin(balls[j].angle)).toFixed(3);
+   balls[j].moving = true;
+
+   // give the other ball opposite direction
+   balls[i].angle = balls[j].angle + Math.PI;
+   balls[i].speed = balls[i].speed - balls[j].speed;
+
+   // get the x component of the total velocity
+   balls[i].velocity.x = (balls[i].speed * Math.cos(balls[i].angle)).toFixed(3);
+   // get the y component of the total velocity
+   balls[i].velocity.y = (-1) * (balls[i].speed * Math.sin(balls[i].angle)).toFixed(3);
+
+   // check for ball is no longer moving
+   if ((Math.abs(balls[i].velocity.x) < 5) && (Math.abs(balls[i].velocity.y) < 5)) {
+      balls[i].velocity.x = 0;
+      balls[i].velocity.y = 0;
+      balls[i].moving = false;
+   }
+   // check for ball is no longer moving
+   if ((Math.abs(balls[j].velocity.x) < 5) && (Math.abs(balls[j].velocity.y) < 5)) {
+      balls[j].velocity.x = 0;
+      balls[j].velocity.y = 0;
+      balls[j].moving = false;
+   }
+
+}
 
 function directBall(event)
 {
@@ -711,7 +733,6 @@ function directBall(event)
       angle = Math.PI / 2;
    }
    balls[0].angle = angle;
-   console.log(angle);
 
    // BOTTOM RIGHT
    if ((balls[0].y < clickPoint.y) && (balls[0].x < clickPoint.x)) {
@@ -727,12 +748,11 @@ function directBall(event)
    }
    // get the x component of the total velocity
    balls[0].velocity.x = (whiteBallSpeed * Math.cos(angle)).toFixed(3);
-
    // get the y component of the total velocity
    balls[0].velocity.y = (-1) * (whiteBallSpeed * Math.sin(angle)).toFixed(3);
 
-   console.log("white ball velocity is set to: " + balls[0].velocity.x);
-   console.log("white ball velocity is set to: " + balls[0].velocity.y);
+   // get the total speed
+   balls[0].speed = whiteBallSpeed;
 
    balls[0].moving = true; // the white ball is moving
 } // end function alignCannon
@@ -793,59 +813,6 @@ function draw()
          if (k > 8) {
             context.drawImage(ballImages[k],balls[k].x - ballRadius,balls[k].y - ballRadius, 2 * ballRadius, 2 * ballRadius);
          }
-
-         //make the circle
-         /*if (k < 8) {
-            //context.fillStyle = "white";
-            context.beginPath();
-            context.arc(balls[k].x, balls[k].y, ballRadius,
-            0, Math.PI * 2);
-            context.closePath();
-            context.fill();
-         }
-         else if (k > 8){
-            context.fillStyle = colorArray[k - 9];
-            context.arc(balls[k].x, balls[k].y, ballRadius,
-             0, Math.PI * 2);
-            context.closePath();
-            context.fill();
-         }
-         else {
-            console.log("8");
-            //context.fillStyle = "black";
-            context.beginPath();
-            context.arc(balls[k].x, balls[k].y, ballRadius,
-            0, Math.PI * 2);
-            context.closePath();
-            context.fill();
-         }*/
-
-         //make the stripe
-         /*if ((k < 8) && (k !== 1)) {
-            context.fillStyle = "red";
-            context.beginPath();
-            context.arc(balls[k].x, balls[k].y, ballRadius,
-             (3 * Math.PI/4), (Math.PI/4));
-            context.arc(balls[k].x, balls[k].y, ballRadius,
-             (4 * Math.PI/3), ((2 * Math.PI) - Math.PI/4));
-
-             context.moveTo(balls[k].x + Math.cos(Math.PI/4), balls[k].y - Math.sin(Math.PI/4));
-             context.lineTo(balls[k].x + Math.cos(Math.PI/4), balls[k].y + Math.sin(Math.PI/4));
-             context.lineWidth = 1; // line width
-             context.stroke(); //draw path
-
-             context.moveTo(balls[k].x + Math.cos(Math.PI/4), balls[k].y - Math.sin(Math.PI/4));
-             context.lineTo(balls[k].x + Math.cos(Math.PI/4), balls[k].y + Math.sin(Math.PI/4));
-             context.lineWidth = 1; // line width
-             context.stroke(); //draw path
-
-             context.closePath();
-             context.fill();
-
-            context.closePath();
-            context.fill();
-         }*/
-
          if (k !== 0) {
             context.font = "12px Futura";
             if (k > 8 || k < 8) {
@@ -862,29 +829,53 @@ function draw()
                context.fillText(k, balls[k].x - 7, balls[k].y - 4);
             }
          }
-
       } // end if
    }
 
    //draw the holes
+   holeRadius = ballRadius + 5; // reset the holeRadius because for some reason there's a glitch with the dial nob
    context.fillStyle = "black";
    for (k = 0; k < NUM_HOLES; k++) {
+      holeRadius = ballRadius + 5;
       context.beginPath();
-         context.arc(holes[k].x, holes[k].y, holeRadius,
-             0, Math.PI * 2);
-         context.closePath();
-         context.fill();
+      context.arc(holes[k].x, holes[k].y, holeRadius,
+          0, Math.PI * 2);
+      context.closePath();
+      context.fill();
    }
-
 
 } // end function draw
 
 // display an alert when the game ends
 function showGameOverDialog(message)
 {
-   document.getElementById("Message").innerHTML = message;
+   context.fillStyle = "white";
+   context.fontFamily = "Futura, sans serif";
+   context.font = "bold 20px sans-serif";
+   context.textBaseline = "top";
+   context.fillText(message, 40, 60);
+
+   context.fillText("Shots fired: " + shotsFired, 40, 90);
+   context.fillText("Total time: " + timeElapsed + " seconds ", 40, 120);
+   context.fillText("Click on the screen to replace the white ball.", 40, 150);
+
+   /*document.getElementById("Message").innerHTML = message;
    document.getElementById("scores").innerHTML = "Shots fired: " + shotsFired +
-      "</br>Total time: " + timeElapsed + " seconds ";
+      "</br>Total time: " + timeElapsed + " seconds ";*/
+} // end function showGameOverDialog
+
+function sunkWhiteBall(message)
+{
+   context.fillStyle = "white";
+   context.fontFamily = "Futura, sans serif";
+   context.font = "bold 20px sans-serif";
+   context.textBaseline = "top";
+   context.fillText(message, 40, 60);
+   context.fillText("Click on the screen to replace the white ball.", 40, 90);
+
+   /*document.getElementById("Message").innerHTML = message;
+   document.getElementById("scores").innerHTML = "Shots fired: " + shotsFired +
+      "</br>Total time: " + timeElapsed + " seconds ";*/
 } // end function showGameOverDialog
 
 window.addEventListener("load", setupGame, false);

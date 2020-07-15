@@ -96,11 +96,11 @@
          cursor: pointer;
          box-shadow: 3px 3px 8px black;
       }
-      #increaseSpeed, #decreaseSpeed {
+      #increaseSpeed, #decreaseSpeed, #pauseButton {
          background-color: #d5313e;
          margin-left: 30px;
       }
-      #increaseSpeed:hover, #decreaseSpeed:hover {
+      #increaseSpeed:hover, #decreaseSpeed:hover, #pauseButton:hover {
          background-color: #ff5741;
          cursor: pointer;
          box-shadow: 3px 3px 8px black;
@@ -155,7 +155,7 @@
       #increaseFriction:active, #decreaseFriction:active,
       #reverseFriction:active, resetButton:active,
       #marsButton:active, #moonButton:active,
-      #earthButton:active
+      #earthButton:active, #pauseButton:active
       {
          border: none;
          box-shadow: inset 3px 3px 8px black;
@@ -208,6 +208,7 @@
                <div class="horizontal">
                    <p><input id = "startButton" class="button" type = "button" value = "Start Game"></p>
                    <p><input id = "resetButton" class="button" type = "button" value = "Reset Values"></p>
+                   <p><input id = "pauseButton" class="button" type = "button" value = "Pause"></p>
                </div>
             </div>
             <div class="vertical">
